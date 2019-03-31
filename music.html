@@ -1,0 +1,375 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+    }
+    /*div{*/
+        /*border: 1px black solid;*/
+    /*}*/
+    .all {
+        width: 650px;
+        margin: 200px auto;
+    }
+    .img img {
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+    }
+    .img {
+
+        width: 150px;
+        height: 150px;
+        box-sizing: border-box;
+    }
+    .information {
+        display: flex;
+    }
+    .rest {
+        width: 500px;
+        box-sizing: border-box;
+    }
+    .singer {
+        text-align: center;
+        margin-top: 10px;
+        position: relative;
+        right: 35px;
+    }
+    .before,.next,.loop-style {
+        width: 19px;
+        height: 20px;
+        overflow: hidden;
+        position: relative;
+
+    }
+    .loop-style {
+        width: 27px;
+    }
+    .before img {
+        position: absolute;
+        top: -29px;
+    }
+    .next img {
+        position: absolute;
+        top: -51px;
+    }
+    .start img {
+        position: relative;
+    }
+
+    .start {
+        width: 21px;
+        height: 29px;
+        overflow: hidden;
+        position: relative;
+        bottom: 4px;
+
+    }
+    .control {
+        display: flex;
+        justify-content:space-between;
+        width: 180px;
+        margin-left: 110px;
+        position: relative;
+        bottom: 15px;
+        top:15px;
+    }
+    .loop-style img{
+        position: absolute;
+        top: -208px;
+
+    }
+    .total {
+        background-color: white;
+        width: 200px;
+        height: 3px;
+        position: absolute;
+        top: 0px;
+    }
+    .now {
+        background-color: black;
+        width: 0px;
+        height: 3px;
+        position: absolute;
+        top: 0px;
+    }
+    .move-circle {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background-color: green;
+
+        position: absolute;
+        top: -2px;
+    }
+    .process {
+        position: relative;
+        width: 300px;
+        margin: 25px auto;
+    }
+    .songlist {
+        padding: 30px;
+    }
+    ul {
+        list-style: none;
+    }
+    li {
+        border: 1px black;
+        border-bottom-style: dashed;
+        justify-content:space-between;
+    }
+    .process p {
+        margin-top: 20px;
+        position: relative;
+        top:8px;
+    }
+    .playing {
+        background-color: white;
+    }
+</style>
+<script src="https://cdn.bootcss.com/jquery/3.3.1/jquery.min.js"></script>
+<body style="background-color: hotpink;">
+<input type="text" class="search_text"><button id="search_btn">搜索</button>
+    <!--总体-->
+    <div class="all">
+        <!--正在播放的歌曲信息-->
+        <div class="information">
+            <!--专辑封面-->
+            <div class="img">
+                <img src="1pic.jpg">
+            </div>
+            <!--其余信息-->
+            <div class="rest">
+                <!--当前歌手信息-->
+                <div class="singer">
+                    <p></p>
+                </div>
+                <!--播放进度-->
+                <div class="process">
+                    <!--歌曲总时长-->
+                    <div class="total"></div>
+                    <!--当前时长-->
+                    <div class="now"></div>
+                    <!--进度圆球-->
+                    <div class="move-circle"></div>
+                    <!--时长文字显示-->
+                    <p>00:00/03:29</p>
+                </div>
+                <!--歌曲操作-->
+                <div class="control">
+                    <!--上一曲-->
+                    <div class="before">
+                        <img src="player.png" alt="">
+                    </div>
+                    <!--播放/暂停-->
+                    <div class="start">
+                        <img src="player.png" alt="">
+                    </div>
+                    <!--下一曲-->
+                    <div class="next">
+                        <img src="player.png" alt="">
+                    </div>
+                    <!--循环模式-->
+                    <div class="loop-style">
+                        <img src="player.png" alt="">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!--歌单-->
+        <div class="songlist">
+            <ul>
+
+            </ul>
+        </div>
+        <audio></audio>
+    </div>
+    <script>
+
+        // 歌曲信息
+        var data =[
+            // {
+            //     singer:'Cool G Rap',
+            //     song:'Let the games begin',
+            //     pic:'1pic.jpg',
+            //     url:'1aud.m4a'
+            // },
+            // {
+            //     singer:'Bishop Briggs',
+            //     song:'Mercy',
+            //     pic:'2pic.jpg',
+            //     url:'2aud.m4a'
+            // },
+            // {
+            //     singer:'岩崎琢 (Iwasaki Taku)',
+            //     song:'Awake',
+            //     pic:'3pic.jpg',
+            //     url:'3aud.m4a'
+            // }
+        ]
+        var index =0;//当前歌曲顺序
+        var timer =null; //定时器名称
+        var rdeg =0; //专辑旋转角度
+        var information =document.querySelector('.singer p');//当前歌曲信息
+        var currentpic =document.querySelector('.img img');//当前专辑封面
+        var audio =document.querySelector('audio');//音频标签
+        var start =document.querySelector('.start');//播放按钮
+        var before =document.querySelector('.before');//上一曲按钮
+        var next =document.querySelector('.next');//下一曲按钮
+        var start_btn =document.querySelector('.start img');//播放按钮图片
+        var processtext =document.querySelector(".process p");//时长文字
+        var mode =0; //播放模式    0循环 1单曲 2随机
+        var modeimg =document.querySelector('.loop-style img');//模式图片
+        var mcircle =document.querySelector('.move-circle');//滚动圆点
+        var tline =document.querySelector('.total');//总进度条
+        var nline =document.querySelector('.now');//当前进度条
+        var ulbox =document.querySelector('.songlist ul');//歌单ul
+        var stext =document.querySelector('.search_text');//搜索内容
+        var sbtn =document.querySelector('#search_btn');//搜索按钮
+
+        var str = '';//li标签显示内容
+        for(var i = 0; i < data.length; i++){
+            str += '<li><span>'+data[index]+'</span><span>'+data[i].singer+'</span></li>';
+        }
+        ulbox.innerHTML =str;
+        var songs =document.querySelectorAll('li');//获取所有li
+        songs[0].className ='playing';
+
+        for(var i = 0; i < data.length; i++){
+            songs[i].index = i;
+            songs[i].addEventListener('click',function () {
+                index = this.index;
+                init();
+                play();
+            })}
+
+        function init() {
+            rdeg =0;//专辑图片初始角度
+            information.innerHTML ='<span>'+data[i].song+'</span>-----<span>'+data[i].singer+'</span>';//当前歌曲信息
+            currentpic.src =data[index].pic;//初始图片
+            audio.src =data[index].url;
+            if (!audio.played){
+                start_btn.style.right =28+'px';
+            }
+            for(var i = 0; i < data.length; i++){
+                songs[i].className = '';
+            }
+            songs[index].className = 'playing';
+
+        }
+        init();
+
+
+        //进度条及其相关
+        audio.addEventListener('canplay',function () {
+            var tmin =parseInt(audio.duration/60);
+            tmin =tmin>9?tmin:"0"+tmin;
+            var tsec =parseInt(audio.duration%60);
+
+            audio.addEventListener('timeupdate',function () {
+                var cmin =parseInt(audio.currentTime/60);
+                cmin =cmin>9?cmin:"0"+cmin;
+                var csec =parseInt(audio.currentTime%60);
+                csec =csec>9?csec:"0"+csec;
+                var left =audio.currentTime/audio.duration*200;
+                processtext.innerHTML =cmin+":"+csec+"/"+tmin+":"+tsec;
+
+                mcircle.style.left = left + 'px';
+                nline.style.width = left + 'px';
+
+            tline.addEventListener('click',function (e) {
+                audio.currentTime = e.offsetX / 200 * audio.duration;
+            })
+                //模式方法
+
+                if (audio.ended){
+
+                    switch (mode) {
+                        //循环
+                        case 0:
+                            index++;
+                            if (index>data.length-1){
+                                index =0;
+                            }
+                            init();
+                            play();
+                            break;
+                        //单曲
+                        case 1:
+                            init();
+                            play();
+                            break;
+                        //随机
+                        case 2:
+                            do{
+                                var randomNum = Math.floor(Math.random() * data.length);
+                            }while (randomNum === index);
+                            index = randomNum;
+                            init();
+
+                            play();
+                            break;
+                    }
+                }
+            })
+
+        })
+        //点击播放按钮
+        function play(){
+            start_btn.style.right =28+'px';
+            audio.play();
+            clearInterval(timer);
+            timer =setInterval(function () {
+                rdeg++;
+                currentpic.style.transform ='rotate('+rdeg+'deg)';
+            },20);
+        }
+        start.addEventListener('click',function () {
+            if (audio.paused) {
+                play();
+            }else{
+                start_btn.style.right =0+'px';
+
+                audio.pause();
+            }
+        });
+        //上一曲
+        before.addEventListener('click',function () {
+           index--;
+           index =index<0?data.length-1:index;
+           init();
+           audio.play();
+        });
+        //下一曲
+        next.addEventListener('click',function () {
+            index++;
+            index =index>data.length-1?0:index;
+
+            init();
+            audio.play();
+        });
+        modeimg.addEventListener('click',function () {
+            mode++;
+            if (mode>2){
+                mode =0;
+            }
+            switch (mode) {
+                case 0:
+                    modeimg.style.top =-208+"px";
+                    break;
+                case 1:
+                    modeimg.style.top =-235+"px";
+                    break;
+                case 2:
+                    modeimg.style.top =-75+"px";
+            }
+        })
+
+    </script>
+</body>
+</html>
